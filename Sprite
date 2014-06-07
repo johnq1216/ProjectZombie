@@ -1,0 +1,376 @@
+package zombieTypes;
+
+import graphics.SpriteFactory;
+import graphics.TempSprite;
+
+import java.util.List;
+import java.util.Random;
+
+import com.QuachProjectZombie.Main;
+import com.QuachProjectZombie.R;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.Canvas;
+import android.view.SurfaceView;
+
+/**
+ * This class uses a 4x4 sprite sheet template. The variable currentFrame has
+ * the primary use of cycling through different images and has a secondary but
+ * important task of timing the Sprite's damage dealt to the wall.
+ */
+public class Sprite {
+
+	// the following is how many times the sprite sheet will be split into rows
+	// and columns
+	private static final int BMP_COLUMNS = 4;
+	private static final int BMP_ROWS = 4;
+	// these indicate rows on the spritesheet which are animation states.
+	private static final int STATE_WALK = 0;
+	private static final int STATE_ATTACK = 1;
+	private static final int STATE_DEATH = 2;
+
+	private int x, y, xSpeed, ySpeed;
+	protected SurfaceView gameView;
+	private Bitmap spriteBMP, bmpBloodDeath;
+	private int width, height, currentFrame, currentHP, maxHP, effectFlag,
+			storedXSpeed, storedYSpeed;
+	private long totalTime = System.currentTimeMillis();
+	private int frameTime;
+	final static int ZOMBIE_BASE_HP = 100;
+	private boolean invulnerable = false;
+	protected boolean wallHit = false;
+	private Paint paint;
+	private boolean attackMode = false;
+	private boolean damageNow = true;
+	private boolean startDeathAnim = false;
+	public boolean isDead = false;
+	private int zombieID = 0;
+	public final static int ID_ZWALKER = 0, ID_ZRUNNER = 1, ID_ZTANK = 2,
+			ID_E_RAGE = 3;
+	Random rnd = new Random();
+
+	public Sprite(SurfaceView gameView, int gameLevel) {
+		this.gameView = gameView;
+		// spawn at the top of scree
+		x = rnd.nextInt(gameView.getWidth() - width);
+		setY(-60);
+		xSpeed = rnd.nextInt(2);
+		totalTime = System.currentTimeMillis();
+
+		maxHP = ZOMBIE_BASE_HP;
+		currentHP = ZOMBIE_BASE_HP;
+		isDead = false;
+//		
+//		currentHP = 0;
+//		isDead = true;
+		runDeath();
+		bmpBloodDeath = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.blood5);
+	}
+
+	private void update(long sleepSuggested, long startTime) {
+
+		long timePassed = System.currentTimeMillis() - startTime;
+		long realTimeXSpeed, realTimeYSpeed;
+		if (timePassed > sleepSuggested) {
+			realTimeXSpeed = timePassed / sleepSuggested;
+			realTimeYSpeed = timePassed / sleepSuggested;
+		} else {
+			realTimeXSpeed = 1;
+			realTimeYSpeed = 1;
+		}
+
+		// border collision and velocity reversal
+		if (x >= gameView.getWidth() - width - xSpeed || x + xSpeed <= 0) {
+			xSpeed = -xSpeed;
+		}
+
+		x += xSpeed * realTimeXSpeed;
+
+		// if (y >= gameView.getHeight() - height - ySpeed || y + ySpeed <= 0) {
+		// ySpeed = -ySpeed;
+		// }
+		y += ySpeed * realTimeYSpeed;
+
+		long currTime = (System.currentTimeMillis());
+		// cycles through number used for animation frame. In this case, it's;
+		// 0, 1, 2.
+
+		// distance in this case is currentFrame. figure out the formula
+		if (currTime - totalTime >= frameTime) {
+			currentFrame = ++currentFrame % BMP_COLUMNS;
+			totalTime = System.currentTimeMillis();
+		}
+
+	}
+
+	public void onDraw(Canvas canvas, long sleepSuggested, long startTime) {
+
+		if (isAlive()) {
+			update(sleepSuggested, startTime);
+			int srcX = currentFrame * width + 1;
+			int srcY = getSpriteState() * height;
+			// this rectangle will show part of the bitmap
+			Rect src = new Rect(srcX, srcY, srcX + width, srcY + height);
+			// this rectangle will paint the exact coordinates of the bitmap
+			Rect dst = new Rect(x, y, x + width, y + height);
+			// src will be the rectangle that is the visible part of the bmp,
+			// dst
+			// will be where src will be painted
+
+			if (paint != null) {
+				canvas.drawBitmap(spriteBMP, src, dst, paint);
+			} else {
+				canvas.drawBitmap(spriteBMP, src, dst, null);
+			}
+		}
+	}
+
+	private int getSpriteState() {
+		if (attackMode) {
+			return STATE_ATTACK;
+		}
+		return STATE_WALK;
+	}
+
+	public void setBMP(Bitmap bmp) {
+		this.spriteBMP = bmp;
+		width = bmp.getWidth() / BMP_COLUMNS;
+		height = bmp.getHeight() / BMP_ROWS;
+	}
+
+	public void revive() {
+		if (!isAlive()) {
+			isDead = false;
+			currentHP = maxHP;
+			x = rnd.nextInt(gameView.getWidth() - width);
+
+			y = -60;
+//			xSpeed = storedXSpeed;
+//			ySpeed = storedYSpeed;
+			xSpeed = 1;
+			ySpeed = 6;
+
+		}
+
+	}
+
+	public void setMaxHP(int enteredHP) {
+		currentHP = enteredHP;
+		maxHP = enteredHP;
+	}
+
+	public void setHP(int enteredHP) {
+		if (enteredHP > maxHP) {
+			currentHP = maxHP;
+		} else {
+			currentHP = enteredHP;
+		}
+	}
+
+	public int getMaxHP() {
+		return maxHP;
+	}
+
+	public void setFrameTime(int frameTime) {
+		this.frameTime = frameTime;
+	}
+
+	public int getFrameTime() {
+		return frameTime;
+	}
+
+	public void addHP(int addedHP) {
+		if (invulnerable == false) {
+			if (maxHP < currentHP + addedHP)
+				currentHP = maxHP;
+			else
+				currentHP = currentHP + addedHP;
+		}
+
+	}
+
+	public boolean isAlive() {
+		return (currentHP > 0);
+	}
+
+	public int getX() {
+		return x;
+	}
+
+	public int getCenterX() {
+		return x + (width / 2);
+	}
+
+	public int getY() {
+		return y;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+
+	public void setYSpeed(int ySpeed) {
+		this.ySpeed = ySpeed;
+	}
+
+	public void setXSpeed(int xSpeed) {
+		this.xSpeed = xSpeed;
+	}
+
+	public int getYSpeed() {
+		return ySpeed;
+	}
+
+	public int getXSpeed() {
+		return xSpeed;
+	}
+
+	public int getCenterY() {
+		return y + (height / 2);
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public int getEffect() {
+		return effectFlag;
+	}
+
+	public void setEffect(int effectFlag) {
+		this.effectFlag = effectFlag;
+	}
+
+	public void setInvulnerable(boolean bool) {
+		invulnerable = bool;
+	}
+
+	public boolean isCollision(float xEvent, float yEvent) {
+		// TODO Auto-generated method stub
+		boolean collided = xEvent > x && xEvent < x + width && yEvent > y
+				&& yEvent < y + height;
+		if (collided == true) {
+			// pushes zombie back if stunnable
+
+		}
+		return collided;
+
+	}
+
+	public void checkWallHit() {
+		// zombie will stop if it reaches the wall and the wall is still alive
+		if (isAlive() && y >= gameView.getHeight() - 80) {
+			wallHit = true;
+			if (Main.STATSplayerHP > 0) {
+				ySpeed = 0;
+				xSpeed = 0;
+				setAttackMode(true);
+				// this will use the sprite's animation to time the actual
+				// damage
+				// however, the run method can run several times while
+				// currentFrame has
+				// the value of 1. therefore, it's checked by the damageNow
+				// boolean
+				// which will be restored when the currentFrame's value becomes
+				// 2.
+				if (currentFrame == 1 && damageNow && isAlive()) {
+					Main.STATSplayerHP--;
+					damageNow = false;
+				} else if (currentFrame == 2) {
+					damageNow = true;
+				}
+			}
+			// once the wall is down, zombie will continue on
+			// we'll use this code later. Right now, the wall going down is
+			// immediate defeat
+			// else{
+			// if (getYSpeed() == 0){
+			// setYSpeed(2);
+			// }
+			// }
+		}
+
+	}
+
+	public void setPaint(Paint paint) {
+		this.paint = paint;
+	}
+
+	public Paint getPaint() {
+		return paint;
+	}
+
+	public boolean setAttackMode(boolean attackMode) {
+		this.attackMode = attackMode;
+		return attackMode;
+	}
+
+	public boolean getAttackMode() {
+		return attackMode;
+	}
+
+	public void runDamage(int debugDamageDealt) {
+		addHP(-debugDamageDealt);
+		// TODO Auto-generated method stub
+		if (getY() + getHeight() > Main.damageDropOff) {
+			setY(getY() - 10);
+		}
+	}
+	private void runDeath(){
+		if (!isAlive() && !isDead) {
+			isDead = true;
+			// stores Velocity values to be reused again upon Resurrection
+			storedXSpeed = getXSpeed();
+			storedYSpeed = getYSpeed();
+			setHP(0);
+			setY(-100);
+			setX(0);
+			setYSpeed(0);
+			setXSpeed(0);
+		}
+
+	}
+
+	public void runDeath(Canvas canvas, List<TempSprite> temps, int kills) {
+		// distance in this case is currentFrame. figure out the formula
+		if (!isAlive() && !isDead) {
+			isDead = true;
+			temps.add(new TempSprite(temps, gameView, getX() + getWidth() / 2,
+					getY() + getHeight() / 2, bmpBloodDeath, 5, 20));
+
+			// stores Velocity values to be reused again upon Resurrection
+			storedXSpeed = getXSpeed();
+			storedYSpeed = getYSpeed();
+			setHP(0);
+			setY(-100);
+			setX(0);
+			setYSpeed(0);
+			setXSpeed(0);
+			kills++;
+		}
+
+	}
+
+	public int getZombieID() {
+		return zombieID;
+	}
+
+	public void setZombieID(int id) {
+		zombieID = id;
+	}
+}

@@ -1,0 +1,540 @@
+package com.QuachProjectZombie;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import com.QuachProjectZombie.Briefing.ActivityLoader;
+
+import data.Food;
+import data.SpawnScript;
+import graphics.SpriteFactory;
+import threadAndTimers.Timer;
+import zombieTypes.Sprite;
+import Weapon.Weapon;
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Align;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.View.OnTouchListener;
+
+public class Main extends Activity implements OnTouchListener {
+
+	/**
+	 * 
+	 Use the following to try and get size of screen..
+	 Check your bookmark in Gamedevelopment for the link to this idea
+	 
+	Display display = getWindowManager().getDefaultDisplay(); 
+    int width = display.getWidth();
+    int height = display.getHeight()
+    
+    
+	 * - Revise the spawn script to have the following:
+	 * 1. Walkers will always be spawned.
+	 * 2. Special Zombies will be spawned from another switch board. This board 
+	 * initially has all zombie types disabled.  The OnCreate method in Main will 
+	 * call a method in SpawnScript that will turn on zombies for each round.
+	 * 
+	 * - Created new method and varaibles for Sprite. Update with its
+	 * subclasses to make use of the new Max Velocity Variables
+	 * 
+	 * - Zombies are created at the start and killed off to load up the list.
+	 * Crude way of starting it and may change later
+	 * 
+	 * - Create Title Screen with every Zombie Type running down. 
+	 * 
+	 * - timers are not stopped by stopping the run method cuz of their nature
+	 * 
+	 * - Since the old way didn't help, use the new way where zombies are shot
+	 * center mass...then add deviation values from there
+	 * 
+	 * 
+	 * - Sound Manager is more complicated. Have SpriteFactory use its own
+	 * soundpool for now
+	 * 
+	 * - Move all SurvBot functions to SpriteFactory.
+	 * 
+	 * - Need to implement change to default pistol in case both weapons are out
+	 * of ammo
+	 * 
+	 * Main will extract HP bonus from CommandCenter and deplete it. HP gains
+	 * from those bonus points are permanent but subject to diminising returns.
+	 * 
+	 * - WILL IMPLEMENT THIS PLAN LATER. The game will clear the list in
+	 * Briefing. The game must force the player to choose at least one weapon.
+	 * If not, the game will suffer an outofbounds exception error. For now, we
+	 * need to add a dummy weapon to the list to avoid having it crash.
+	 * 
+	 * - Pistols won't run out of ammo. But scrap plans to change to pistol if
+	 * other weapons are out
+	 * 
+	 * - Move some of the calculations, including reloading to the weapon
+	 * subclasses
+	 * 
+	 * - Figure out how much ammo each gun class should have. We must generalize
+	 * now
+	 * 
+	 * - the debug method is showing that the game is detecting the player's
+	 * touch but the gun isn't firing and zombies aren't dying. UPDATE: the
+	 * weaponSlider to change weapons is unaffected. Thus the issue is isolated
+	 * onto the gun firing itself.
+	 * 
+	 * - Bug. Game when started after pause, sometimes crashes and have to click
+	 * on Game again. Also, zombies cannot be damaged for some reason. The game
+	 * is detecting the player's touch by way of the "Debug" string showing up.
+	 * This might be a problem with the stack
+	 * 
+	 * Bugs: the countdowntimer continues to tick even if activity is paused
+	 * 
+	 */
+
+	private boolean reloadInProcess, gameOver, gunFiring, debug = false,
+			weaponSwitch = false, crosshairOn = false;
+	private Timer reloadTime, timerForTriggerHeld;
+	public static Timer countdown;
+	private GameView gameView;
+
+	// STATScritChance and STATSplayerHP are used in SpriteFactory
+	public static int STATSplayerHP, STATScritChance, damageDropOff;
+
+//	private SoundPool sp;
+	private int kills, rpm = 700, screenHeight = 1,
+			screenWidth = 1;
+	private SpriteFactory factory;
+	private float crosshairX, crosshairY, eventX, eventY;
+	public static boolean fenceTouch = false;
+
+	public long reloadStarTime;
+
+	// MediaPlayer ourSong;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		gameView = new GameView(this);
+		gameView.setOnTouchListener(this);
+		timerForTriggerHeld = new Timer((long) 1000 / (rpm / 60));
+		setContentView(gameView);
+
+		kills = 0;
+		devConfig();
+		factory = new SpriteFactory(this, gameView, Briefing.getGameLevel());
+
+		reloadInProcess = gameOver = false;
+		// parameters don't matter. This just creates a default pistol
+		//		
+		// ourSong = MediaPlayer.create(this, R.raw.belltoll);
+		// ourSong.start();
+	}
+
+	private void devConfig() {
+		// the numbers for STATS variables are default values
+		STATScritChance = 5 + Food.twinkie;
+		STATSplayerHP = 10 + (CommandCenter.getBonusPermanentHP());
+		countdown = new Timer(30);
+		kills = 0;
+	}
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		gameView.pause();
+		countdown.onPauseTime();
+	}
+
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		gameView.resume();
+		countdown.onResumeTime();
+	}
+
+	public boolean onTouch(View v, MotionEvent event) {
+		gameOverSlide(event);
+		shotFired(event);
+		touchChangeWeapons(event);
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			debug = true;
+		}
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			debug = false;
+		}
+		return true;
+
+	}
+
+	// if touchDown is at bottom left, player might want to switch weapons
+	private void touchChangeWeapons(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN
+				// to prevent game from crashing out of bounds array error
+				&& Weapon.getListSize() > 1
+				&& event.getX() <= screenWidth * .30
+				&& event.getY() >= screenHeight - screenHeight * .10) {
+			fenceTouch = true;
+		}
+		if (event.getAction() == MotionEvent.ACTION_UP && fenceTouch == true) {
+			if (event.getX() >= screenWidth - screenWidth * .30
+					&& event.getY() >= screenHeight - screenHeight * .10) {
+				if (Briefing.currentEquippedGun
+						.equals(Weapon.getWeaponIndex(0))) {
+					Briefing.currentEquippedGun = Weapon.getWeaponIndex(1);
+				} else if (Briefing.currentEquippedGun.equals(Weapon
+						.getWeaponIndex(1))) {
+					Briefing.currentEquippedGun = Weapon.getWeaponIndex(0);
+				}
+			}
+			fenceTouch = false;
+		}
+	}
+
+	private boolean shotFired(MotionEvent event) {
+		eventX = event.getX();
+		eventY = event.getY();
+		{
+			if (event.getAction() == MotionEvent.ACTION_DOWN
+					&& STATSplayerHP >= 0
+					&& Briefing.currentEquippedGun.getTotalAmmoInClip() > 0
+					&& !factory.touchWall(eventX, eventY)) {
+				gunFiring = true;
+			}
+			
+
+			if (event.getAction() == MotionEvent.ACTION_UP) {
+				gunFiring = false;
+			}
+			return true;
+		}
+
+	}
+
+	private boolean gameOverSlide(MotionEvent event) {
+		if (STATSplayerHP <= 0) {
+			float initialX = 0;
+			float initialY = 0;
+			float deltaX = 0;
+			float deltaY = 0;
+			// This prevents touchscreen events from flooding the main thread
+			synchronized (event) {
+				try {
+					// Waits 16ms.
+					event.wait(16);
+
+					// when user touches the screen
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						// reset deltaX and deltaY
+						deltaX = deltaY = 0;
+
+						// get initial positions
+						initialX = event.getRawX();
+						initialY = event.getRawY();
+					}
+
+					// when screen is released
+					if (event.getAction() == MotionEvent.ACTION_UP) {
+						deltaX = event.getRawX() - initialX;
+						deltaY = event.getRawY() - initialY;
+
+						Math.abs(deltaX);
+						Math.abs(deltaY);
+
+						// swipped up
+						if (deltaX >= 350 || deltaY >= 350) {
+							gameOver = false;
+							factory.clearSprites();
+							devConfig();
+						}
+
+						return true;
+					}
+				}
+
+				catch (InterruptedException e) {
+					return true;
+				}
+			}
+		}
+		return true;
+
+	}
+
+	public class GameView extends SurfaceView implements Runnable {
+
+		SurfaceHolder ourHolder;
+		Thread ourThread = null;
+		boolean isRunning = false;
+		static final long FPS = 20;
+		int waitTotal = 200;
+
+		// /view takes too much processing
+		// /invalidate() is too much, need threads
+		public GameView(Context context) {
+			// TODO Auto-generated constructor stub
+			super(context);
+			ourHolder = getHolder();
+			
+
+		}
+
+		private void victoryOrDefeat(Canvas canvas) {
+			// VICTORY!!
+			if (countdown.getSeconds() <= 0 && STATSplayerHP > 0
+					&& !factory.checkListForLive()) {
+				Paint textPaint = new Paint();
+				textPaint.setColor(Color.RED);
+				textPaint.setTextAlign(Align.CENTER);
+				textPaint.setTextSize(20);
+				waitTotal--;
+				int nextRound = Briefing.getGameLevel() + 1;
+				canvas.drawText("VICTORY!!!", canvas.getWidth() / 2, canvas
+						.getHeight() / 3, textPaint);
+				canvas.drawText(kills + " zombies exterminated!!!", canvas
+						.getWidth() / 2, canvas.getHeight() / 4, textPaint);
+				canvas.drawText("Round " + nextRound + " will begin", canvas
+						.getWidth() / 2, canvas.getHeight() / 2, textPaint);
+				if (waitTotal <= 0) {
+					waitTotal = 200;
+					ActivityLoader.loadCommandCenter(this);
+					finish();
+				}
+
+			}
+			// MISSION FAILED
+			if (STATSplayerHP <= 0) {
+				Paint textPaint = new Paint();
+				textPaint.setColor(Color.RED);
+				textPaint.setTextAlign(Align.CENTER);
+				textPaint.setTextSize(20);
+				canvas.drawText("FAIL!!!  Slide to restart",
+						canvas.getWidth() / 2, canvas.getHeight() / 3,
+						textPaint);
+				gameOver = true;
+			}
+		}
+
+		private void countdownAndHP(Canvas canvas) {
+			Paint textPaint = new Paint();
+			textPaint.setColor(Color.YELLOW);
+			textPaint.setAlpha(100);
+			textPaint.setShadowLayer(2, 2, 2, Color.GRAY);
+			textPaint.setTextAlign(Align.CENTER);
+			textPaint.setTextSize(30);
+			canvas.drawText("Round " + Briefing.getGameLevel(), canvas
+					.getWidth() / 2, canvas.getHeight() / 5, textPaint);
+
+			if (countdown.getSeconds() > 0) {
+				textPaint.setColor(Color.YELLOW);
+				textPaint.setAlpha(100);
+				textPaint.setShadowLayer(2, 2, 2, Color.GRAY);
+				textPaint.setTextAlign(Align.CENTER);
+				textPaint.setTextSize(30);
+				canvas.drawText(countdown.getSeconds() + "",
+						canvas.getWidth() / 4, canvas.getHeight() / 4,
+						textPaint);
+			}
+
+			if (STATSplayerHP > 0) {
+				textPaint.setColor(Color.RED);
+				textPaint.setAlpha(100);
+				textPaint.setShadowLayer(2, 2, 2, Color.BLACK);
+				textPaint.setTextAlign(Align.CENTER);
+				textPaint.setTextSize(20);
+
+				
+				// draws player HP
+				canvas.drawText("Ammo: " 
+						+ Briefing.currentEquippedGun.getTotalAmmoInClip() + "/"
+						+ Briefing.currentEquippedGun.getTotalAmmo(),
+						canvas.getWidth() / 2 + canvas.getWidth() / 4, canvas
+								.getHeight() / 4, textPaint);
+
+				// draws RELOADING prompt
+				textPaint.setColor(Color.GRAY);
+				if (reloadInProcess) {
+					canvas.drawText("RELOADING!!", canvas.getWidth() / 2,
+							canvas.getHeight() / 2 + canvas.getHeight() / 4,
+							textPaint);
+				}
+				if (debug) {
+					canvas.drawText(eventX + " " + eventY,
+							canvas.getWidth() / 2, canvas.getHeight() / 2
+									+ canvas.getHeight() / 4, textPaint);
+				}
+				// draws damage dealt to last zombie
+				textPaint.setColor(Color.BLUE);
+				// canvas.drawText(Math.abs(factory.debugDamageDealt)
+				// + " Damage!!", canvas.getWidth() / 2
+				// + canvas.getWidth() / 4 - 20, canvas.getHeight() / 2,
+				// textPaint);
+
+				canvas.drawText(Math.abs(factory.debugDamageDealt)
+						+ " Damage!!", canvas.getWidth() / 2
+						+ canvas.getWidth() / 4 - 20, canvas.getHeight() / 2,
+						textPaint);
+
+				// this paints a line on the map where damage drops
+				textPaint.setColor(Color.RED);
+				damageDropOff = canvas.getHeight()
+						- Briefing.currentEquippedGun.getRange()
+						* (canvas.getHeight() / 4);
+				for (int x = 10; x > 0; x--) {
+					canvas.drawCircle(canvas.getWidth() / 10 * x,
+							damageDropOff, 2, textPaint);
+				}
+
+			}
+		}
+
+		public void pause() {
+			isRunning = false;
+			// ourSong.release();
+			while (true) {
+				// stops thread and allows it to die
+				try {
+					ourThread.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+			ourThread = null;
+
+		}
+
+		public void resume() {
+			isRunning = true;
+			ourThread = new Thread(this);
+			ourThread.start();
+		}
+
+		private void checkReload() {
+			// TODO Auto-generated method stub
+			
+
+
+			if (Briefing.currentEquippedGun.getTotalAmmoInClip() <= 0) {
+				if (!reloadInProcess) {
+					reloadInProcess = true;
+					reloadStarTime = System.currentTimeMillis();
+				} else {
+					if (Briefing.currentEquippedGun.getTotalAmmo() > 0
+							&& System.currentTimeMillis() - reloadStarTime >= Briefing.currentEquippedGun
+									.getReloadTime()) {
+						Briefing.currentEquippedGun.reload();
+						reloadInProcess = false;
+					}
+					//Reload longer if out of ammo
+					else if (System.currentTimeMillis() - reloadStarTime >= 3 * Briefing.currentEquippedGun
+									.getReloadTime()) {
+						Briefing.currentEquippedGun.freeReload();
+						reloadInProcess = false;
+					} 
+
+				}
+			}
+		}
+
+		public void run() {
+
+			long desiredFPSinMS = 1000 / FPS;
+			long startTime;
+
+			while (isRunning) {
+				if (!ourHolder.getSurface().isValid())
+					continue;
+
+				checkReload();
+				startTime = System.currentTimeMillis();
+
+				// change guns if the event is at the weapon icon
+
+			
+
+				// if gun is automatic, it will fire again after a certain ms
+				if (gunFiring && STATSplayerHP >= 0
+						&& Briefing.currentEquippedGun.getTotalAmmoInClip() > 0
+						&& timerForTriggerHeld.getMS() <= 0) {
+					Briefing.currentEquippedGun.subtractBullet();
+					factory.playGunShot();
+
+					factory.touchDetected(eventX, eventY);
+					kills = factory.getkills();
+					timerForTriggerHeld.setMS((long) 1000 / (rpm / 60));
+					// if the gun is not automatic, this stops firing
+					if (!Briefing.currentEquippedGun.checkAuto()) {
+						gunFiring = false;
+					}
+				}
+
+				// // SPAWN zombies while timer is going
+				// if (countdown.getSeconds() >= 0
+				// && (spawnTimer.getSeconds() >= 1)) {
+				// spawnTimer.reset();
+				// RoundList.spawnZombies(gameView, Briefing.getGameLevel(),
+				// factory.getSpriteList(), countdown);
+				// }
+
+				Canvas canvas = ourHolder.lockCanvas();
+				screenWidth = canvas.getWidth();
+				screenHeight = canvas.getHeight();
+				factory
+						.render(canvas, desiredFPSinMS, startTime,
+								STATSplayerHP);
+				countdownAndHP(canvas);
+				victoryOrDefeat(canvas);
+				ourHolder.unlockCanvasAndPost(canvas);
+
+				long updateLag = System.currentTimeMillis() - startTime;
+				long sleepTime = desiredFPSinMS - updateLag;
+				try {
+					/*
+					 * 20 FPS means a task is run every 50 MS. Ideally, this
+					 * should run every 50 MS.
+					 * 
+					 * However, the computer might run things too fast. So if
+					 * the computer runs its task ahead of schedule, the game
+					 * must sleep the rest of the difference to meet the 50 MS
+					 * interval.
+					 * 
+					 * Sometimes, the lag gets bigger than the desired FPS of 50
+					 * MS. Since the result sleep value from 50 MS minus Lag
+					 * will go into negative and you cannot sleep negative
+					 * values, whenever this happens, it'll force a sleep of 5
+					 * MS.
+					 */
+					if (sleepTime > 0)
+						Thread.sleep(sleepTime);
+					else
+						// if the updateLag is big enough to cause sleeptime to
+						// go
+						// into negative
+						Thread.sleep(5);
+				} catch (Exception e) {
+				}
+
+			}
+
+		}
+	}
+
+}

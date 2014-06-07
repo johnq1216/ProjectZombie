@@ -1,0 +1,71 @@
+package data;
+
+import graphics.SpriteFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import threadAndTimers.Timer;
+
+import android.view.SurfaceView;
+
+import com.QuachProjectZombie.Briefing;
+import com.QuachProjectZombie.Main;
+import com.QuachProjectZombie.Main.GameView;
+
+import zombieTypes.*;
+
+public class SpawnScript {
+
+	static int rand;
+	public static List <String> benchList = new ArrayList<String>() {
+		{
+			add("ragehead");
+			add("runner");
+			add("tank");
+		}
+	};
+	public static List<String> activeList = new ArrayList<String>();
+	// this method should be called on onCreate() of SpriteFactory
+	public static void draft() {
+		int random = new Random().nextInt(benchList.size());
+		activeList.add(benchList.get(random));
+		benchList.remove(random);
+	}
+	
+	// At the beginning of the run loop in Spritefactory, it'll call this class.
+	// Spawnscript will then increment some counters in the Spritefactory.
+	// the Spritefactory will rez or spawn zombies based on how much is in the
+	// counters.
+
+	// break statements are needed to stop wierdness from happening
+
+	// if a zombie should be resurrected
+	public static void checkRand(int rand, SpriteFactory factory){
+		if (activeList.get(rand).equals("runner"))
+			factory.counterZombieRunner++;
+		else if (activeList.get(rand).equals("tank"))
+			factory.counterZombieTank++;
+		else if (activeList.get(rand).equals("ragehead"))
+			factory.counterEliteRage++;
+	}
+	
+	public static void spawnZombies(SpriteFactory factory) {
+		// TODO Auto-generated method stub
+
+		rand = new Random().nextInt(100) + 1;
+
+		
+		switch (Briefing.gameLevel) {
+		case 1:
+
+			
+			if (rand <= 65) {
+				rand = new Random().nextInt(activeList.size());
+				checkRand(rand, factory);
+			}
+			break;
+		}
+	}
+}

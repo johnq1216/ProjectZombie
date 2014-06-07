@@ -1,0 +1,57 @@
+package graphics;
+
+import com.QuachProjectZombie.R;
+import com.QuachProjectZombie.Main.GameView;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.view.SurfaceView;
+
+public class Wall extends PrimSprite {
+
+	Bitmap bmp;
+	SurfaceView gameView;
+	
+	//implement this later
+	int hp;
+
+	public Wall(int x, int y, SurfaceView gameView) {
+		super(x, y, gameView);
+		bmp = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.fence5);
+		setBitmap(bmp);
+		this.gameView=gameView;
+		
+	}
+	
+	public Wall(SurfaceView gameView){
+		super(gameView);
+		bmp = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.fence5);
+		setBitmap(bmp);
+		this.gameView=gameView;
+	}
+
+	// if zombies collide with wall
+//	public boolean isCollision(float xEvent, float yEvent) {
+//		// TODO Auto-generated method stub
+//		boolean collided = yEvent > getY() && yEvent < getY() + getHeight();
+//		if (collided == true) {
+//
+//		}
+//		return collided;
+//
+//	}
+
+	public void onDraw(Canvas canvas) {
+
+		int fenceTiles = gameView.getWidth() / bmp.getWidth();
+		
+		for (int i = fenceTiles; i >= 0; i--) {
+			///keep it this way since for some reaosn it's not reading local variables
+			canvas.drawBitmap(bmp, i * bmp.getWidth(), gameView.getHeight()
+					- bmp.getHeight(), null);
+		}
+	}
+}

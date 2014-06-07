@@ -1,0 +1,177 @@
+package com.QuachProjectZombie;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.Paint.Align;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+
+public class GameView extends SurfaceView {
+
+	private Bitmap bmp;
+	private SurfaceHolder holder;
+	private GameLoopThread gameLoopThread;
+	private List<Sprite> spriteList = new ArrayList<Sprite>();
+	private long lastClick;
+	private Bitmap bmpBlood;
+	private List<TempSprite> temps = new ArrayList<TempSprite>();
+	private boolean gunReady = true;
+	private Timer timer;
+
+	public GameView(Context context) {
+		super(context);
+		gameLoopThread = new GameLoopThread(this);
+		holder = getHolder();
+		holder.addCallback(new SurfaceHolder.Callback() {
+
+			@Override
+			public void surfaceDestroyed(SurfaceHolder holder) {
+				boolean retry = true;
+				gameLoopThread.setRunning(false);
+				while (retry) {
+					try {
+						gameLoopThread.join();
+						retry = false;
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+
+			@Override
+			public void surfaceCreated(SurfaceHolder holder) {
+				createSprites();
+				gameLoopThread.setRunning(true);
+				gameLoopThread.start();
+				timer = new Timer();
+			}
+
+			@Override
+			public void surfaceChanged(SurfaceHolder holder, int format,
+					int width, int height) {
+			}
+		});
+		bmpBlood = BitmapFactory.decodeResource(getResources(),
+				R.drawable.blood1);
+	}
+
+	// /calls after surface is created. Each method call below uses randomizer
+	// with surface's width and height.
+	// /this would crash if the surface hasn't been created yet
+	private void createSprites() {
+		spriteList.add(createSprite(R.drawable.bad1));
+		spriteList.add(createSprite(R.drawable.bad2));
+		spriteList.add(createSprite(R.drawable.bad3));
+		spriteList.add(createSprite(R.drawable.bad4));
+		spriteList.add(createSprite(R.drawable.bad5));
+		spriteList.add(createSprite(R.drawable.bad6));
+		spriteList.add(createSprite(R.drawable.good1));
+		spriteList.add(createSprite(R.drawable.good2));
+		spriteList.add(createSprite(R.drawable.good3));
+		spriteList.add(createSprite(R.drawable.good4));
+		spriteList.add(createSprite(R.drawable.good5));
+		spriteList.add(createSprite(R.drawable.good6));
+	}
+
+	private Sprite createSprite(int resouce) {
+		Bitmap bmp = BitmapFactory.decodeResource(getResources(), resouce);
+		return new Sprite(this, bmp, 2);
+	}
+
+	synchronized protected void onDraw(Canvas canvas) {
+		canvas.drawColor(Color.BLACK);
+
+		Rect middleRect = new Rect();
+		middleRect.set(0, canvas.getHeight() - 30, canvas.getWidth(), canvas
+				.getHeight());
+		Paint ourWhite = new Paint();
+		ourWhite.setColor(Color.WHITE);
+		canvas.drawRect(middleRect, ourWhite);
+		
+		
+		
+
+		for (int i = temps.size() - 1; i >= 0; i--) {
+			temps.get(i).onDraw(canvas);
+		}
+		for (int i = spriteList.size() - 1; i >= 0; i--) {
+			Sprite sprite = spriteList.get(i);
+			sprite.onDraw(canvas);
+			if (sprite.barricadeHit()) {
+				//temporary debug statement to see if this fires
+				temps.add(new TempSprite(temps, this, (sprite.getX()+(sprite.getX()/2)), (sprite.getY()+(sprite.getY()/2)),
+						bmpBlood));
+				
+				spriteList.remove(sprite);
+			}
+		}
+		
+		Paint textPaint = new Paint();
+		textPaint.setColor(Color.YELLOW);
+		textPaint.setTextAlign(Align.CENTER);
+		textPaint.setTextSize(50);
+		canvas.drawText( timer.getSeconds()+"", canvas.getWidth()/2, 200, textPaint);
+
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN || gunReady == true) {
+			gunReady = false;
+			float x = event.getX();
+			float y = event.getY();
+			// create shot sound
+			synchronized (getHolder()) {
+				for (int i = spriteList.size() - 1; i >= 0; i--) {
+					Sprite sprite = spriteList.get(i);
+					if (sprite.isCollision(x, y)) {
+						sprite.addHP(-1);
+						// temporary debug statement. remove at project
+						// completion
+						temps.add(new TempSprite(temps, this, x, y, bmpBlood));
+						if (sprite.isAlive() == false) {
+							spriteList.remove(sprite);
+							temps.add(new TempSprite(temps, this, x, y,
+									bmpBlood));
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			gunReady = true;
+		}
+		return true;
+	}
+		public void pause() {
+		gameLoopThread.setRunning(false);
+		while (true) {
+			// stops thread and allows it to die
+			try {
+				gameLoopThread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		}
+		gameLoopThread = null;
+
+	}
+
+	public void resume() {
+		gameLoopThread.setRunning(true);
+		gameLoopThread = new GameLoopThread(this);
+		gameLoopThread.start();
+	}
+}

@@ -1,0 +1,170 @@
+package data;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import com.QuachProjectZombie.R;
+
+public class Weapon {
+
+	//weapons will be removed after the round ends to prevent crashes.
+	//if the weapons run out of ammo, it cannot be used for that round unless
+	//refilled by a powerup that round
+	
+	// leave this open for other classes to use freely
+	private static List<Weapon> keptWeapons = new ArrayList<Weapon>();
+
+	/*
+	 * clipSize: 6 to 12 reloadTime: 1 to 2 seconds. Expressed with decimal.
+	 * range: 20% to 100% pushBack: 1 to 4
+	 */
+
+	// gun class needed for graphic and sound. The graphic will have random
+	// color tinting
+	public String weaponClass;
+	double gunClass;
+	
+	public int gunClipSize, gunRange, gunPushBack;
+	//this variable is tangible
+	public int totalAmmo;
+	public double gunReloadTime;
+	public boolean bonusShotgun_2xDmg = false, bonusRifle_Pierce = false,
+			gunAutomatic = false;
+	private int imageRCode;
+	public boolean weaponDefault = false;
+
+	// creates a default pistol. Doesn't matter what is passed into parameters
+	public Weapon(boolean yep) {	
+		gunRange = 2;
+		gunClipSize = 8;
+	
+		gunReloadTime = 800;
+		gunPushBack = 1;
+		gunAutomatic = false;
+		weaponClass = "Pistol";
+		imageRCode = R.drawable.pistol;
+		totalAmmo = 20;
+		weaponDefault = true;
+	}
+	public Weapon() {
+		// if range is 25%, it's a shotgun. Bonus: 2x Damage
+		// if range is 100%, it's a rifle. Bonus: Pierce
+		// if range is 50-75 and auto, it's an SMG. Bonus: +10 ammo
+		// if range is 50-75 and semi-auto, it's a pistol. Bonus: +1 Reload
+
+		Random random = new Random();
+		// ammo count
+		gunClipSize = random.nextInt(14) + 7;
+		// for gunRange, each point adds 25% to range
+		gunRange = random.nextInt(4) + 1;
+		// reload time. Value from 5 to 20. Multiplied by 100 for ms count
+		gunReloadTime = (random.nextInt(15) + 6) * 100;
+		// how far the enemy is pushedback
+		gunPushBack = random.nextInt(4) + 1;
+		// 1/4 chance of gun being automatic
+		if (random.nextInt(3) + 1 == 1) {
+			gunAutomatic = true;
+		}
+
+		// assign gun class
+		switch (gunRange) {
+		// range 25%
+		case 1:
+			weaponClass = "Shotgun";
+			bonusShotgun_2xDmg = true;
+			imageRCode = R.drawable.shotgun;
+			totalAmmo = 50;
+			break;
+		case 4:
+			weaponClass = "Rifle";
+			bonusRifle_Pierce = true;
+			imageRCode = R.drawable.rifle;
+			totalAmmo = 75;
+			break;
+		default:
+			// assumes the range is either 3 or 4
+			if (gunAutomatic) {
+				weaponClass = "SMG";
+				gunClipSize = gunClipSize + 10;
+				imageRCode = R.drawable.smg;
+				totalAmmo = 70;
+			} else {
+				weaponClass = "Pistol";
+				imageRCode = R.drawable.pistol;
+				totalAmmo = 50;
+				// reloadTime cannot go below 5. Or 500 ms.
+				if (gunReloadTime >= 1500) {
+					gunReloadTime = gunReloadTime - 1000;
+				} else {
+					gunReloadTime = 500;
+				}
+			}
+		}
+	}
+
+	public boolean checkAuto() {
+		return gunAutomatic;
+	}
+
+	public String getWeaponClass() {
+		return weaponClass;
+	}
+	
+	public static int getImageRCode(int index){
+		
+		return keptWeapons.get(index).imageRCode;
+	}
+
+	public static String outPrint(int index) {
+		String weaponData = "";
+
+		weaponData = weaponData + "Weapon: "
+				+ keptWeapons.get(index).weaponClass + "\nClip Size: "
+				+ keptWeapons.get(index).gunClipSize + "\nRange: "
+				+ keptWeapons.get(index).gunRange + "\nReloadTime: "
+				+ keptWeapons.get(index).gunReloadTime / 1000
+				+ "\nPushback distance: " + keptWeapons.get(index).gunPushBack;
+
+		return weaponData;
+
+	}
+
+	public static String outPrint() {
+
+		String weaponData = "";
+
+		for (int i = keptWeapons.size() - 1; i >= 0; i--) {
+			Weapon weapon = keptWeapons.get(i);
+			String fireMode = (weapon.gunAutomatic) ? "Automatic" : "Semi-Auto";
+			weaponData = weaponData + "\n\nWeapon Class: " + weapon.weaponClass
+					+ "\nClip Size: " + weapon.gunClipSize + "\nRange: "
+					+ weapon.gunRange + "\nReloadTime: " + weapon.gunReloadTime
+					/ 1000 + "\nPushback distance: " + weapon.gunPushBack + "\nFireMode: "
+					+ fireMode;
+		}
+		return weaponData;
+	}
+
+	public static void generateRandom() {
+		// keptWeapons.clear();
+		keptWeapons.add(new Weapon());
+	}
+
+	public static void clearList() {
+		keptWeapons.clear();
+	}
+	
+	public static void addDefaultPistol(){
+		keptWeapons.add(new Weapon(true));
+	}
+	
+	public static Weapon getWeaponIndex(int index){
+		return keptWeapons.get(index);
+	}
+	
+	public static int getListSize(){
+		return keptWeapons.size();
+	}
+
+}

@@ -1,0 +1,48 @@
+package threadAndTimers;
+
+public class Timer {
+
+	private long startTime;
+	private long timeAccum;
+	private long seconds;
+	private long timeSet, msSet;
+	private boolean abs;
+	private long onPausetime, onResumeTime, totalTimeOff;
+	
+
+	// will count up starting from zero
+	// public Timer() {
+	// timeLeft = 0;
+	// startTime = System.currentTimeMillis();
+	// abs = true;
+	// }
+
+	// will count down starting with the number supplied in paramater
+	public Timer(int timeSet) {
+		startTime = System.currentTimeMillis();
+		this.timeSet = timeSet;
+	}
+
+	public Timer(long msSet){
+		startTime = System.currentTimeMillis();
+		this.msSet = msSet;
+	}
+	public long getSeconds() {
+		timeAccum = (System.currentTimeMillis() - startTime)/1000;
+		return timeSet - timeAccum;
+	}
+	
+	public long getMS(){
+		timeAccum = (System.currentTimeMillis() - startTime);
+		return msSet - timeAccum;
+	}
+	
+	public void setMS(long l){
+		msSet = l;
+		reset();
+	}
+
+	public void reset() {
+		startTime = System.currentTimeMillis();
+	}
+}

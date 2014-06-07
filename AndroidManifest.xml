@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	android:installLocation="preferExternal" package="com.QuachProjectZombie"
+	android:versionCode="1" android:versionName="1.0">
+	<uses-sdk android:minSdkVersion="7" />
+
+<!-- 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> -->
+<!-- 	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" /> -->
+
+
+	<application android:icon="@drawable/zicon" android:label="Scavenger">
+		<activity android:name="com.JohnQ1216.ScavengerZombieDefense.Main" android:screenOrientation="portrait">
+
+			<intent-filter>
+				<action android:name="android.intent.action.MAINGAME" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+
+
+
+
+		<activity android:name="com.JohnQ1216.ScavengerZombieDefense.CommandCenter"
+			android:screenOrientation="portrait" android:label="Scavenger">
+
+			<intent-filter>
+				<action android:name="android.intent.action.COMMANDCENTER" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+
+
+		</activity>
+
+		<activity android:name="com.JohnQ1216.ScavengerZombieDefense.Briefing" android:screenOrientation="portrait"
+			android:label="@string/app_name">
+
+			<intent-filter>
+				<action android:name="android.intent.action.BRIEFING" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+
+	<activity android:name="com.JohnQ1216.ScavengerZombieDefense.Intro" android:screenOrientation="portrait"
+			android:label="@string/app_name">
+
+			<intent-filter>
+				<action android:name="android.intent.action.INTRO" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+
+		<activity android:name="com.JohnQ1216.ScavengerZombieDefense.SplashScreen"
+			android:screenOrientation="portrait" android:label="Scavenger">
+
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+
+		<!--
+			<activity android:name=".Weapon" android:screenOrientation="portrait"
+		-->
+		<!--			android:label="@string/app_name">-->
+<!---->
+		<!--			<intent-filter>-->
+		<!--				<action android:name="android.intent.action.Weapon" />-->
+		<!--				<category android:name="android.intent.category.DEFAULT" />-->
+		<!--			</intent-filter>-->
+		<!--		</activity>-->
+
+	</application>
+</manifest>
+
+	<!--<?xml version="1.0" encoding="utf-8"?>-->
+	<!--
+		<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	-->
+	<!--      package="com.QuachProjectZombie"-->
+	<!--      android:installLocation="preferExternal"-->
+	<!--      android:versionCode="1"-->
+	<!--      android:versionName="1.0">-->
+	<!--    <uses-sdk android:minSdkVersion="7" />-->
+	<!--    -->
+<!---->
+	<!--
+		<application android:icon="@drawable/icon"
+		android:label="@string/app_name">
+	-->
+	<!--        <activity android:name=".Level1"-->
+	<!--        android:screenOrientation="portrait"-->
+	<!--                  android:label="@string/app_name">-->
+	<!--            <intent-filter>-->
+	<!--
+		<action android:name="android.intent.action.MAIN" />
+	-->
+	<!--
+		<category android:name="android.intent.category.LAUNCHER" />
+	-->
+	<!--            </intent-filter>-->
+	<!--        </activity>-->
+<!---->
+	<!--    </application>-->
+	<!--</manifest>-->

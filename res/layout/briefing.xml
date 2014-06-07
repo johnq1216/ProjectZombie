@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical" android:layout_width="fill_parent"
+	android:layout_height="fill_parent"   android:background="@drawable/nightfall">
+	<Button android:layout_width="fill_parent" android:id="@+id/bStart"
+		android:layout_height="wrap_content" android:text="Start"></Button>
+
+	<TextView android:text="You've found the following:"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:id="@+id/textView3" android:layout_height="wrap_content"
+		android:layout_width="wrap_content"></TextView>
+	<TextView android:text="Any food found is displayed here"
+		android:layout_height="wrap_content" android:layout_width="match_parent"
+		android:id="@+id/tvLoot"></TextView>
+	<TextView
+		android:text="You have too many weapons, check
+		any weapons to be discarded"
+		android:id="@+id/textView2" android:layout_width="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:layout_height="wrap_content"></TextView>
+	<ScrollView android:layout_height="wrap_content" android:id="@+id/scrollView1"
+		android:layout_width="match_parent">
+		<LinearLayout android:id="@+id/linearLayout1"
+			android:orientation="vertical" android:layout_width="match_parent"
+			android:layout_height="match_parent">
+			<LinearLayout android:id="@+id/linearLayout1"
+				android:orientation="horizontal" android:layout_width="match_parent"
+				android:layout_height="match_parent" android:paddingBottom="40dp">
+				<CheckBox android:id="@+id/checkBox1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></CheckBox>
+				<ImageView android:id="@+id/iv0" android:layout_height="wrap_content"
+					android:layout_width="wrap_content"></ImageView>
+				<TextView android:id="@+id/tvGun0" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></TextView>
+
+			</LinearLayout>
+			<LinearLayout android:id="@+id/linearLayout1"
+				android:orientation="horizontal" android:layout_width="match_parent"
+				android:layout_height="match_parent" android:paddingBottom="20dp">
+				<CheckBox android:id="@+id/checkBox1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></CheckBox>
+				<ImageView android:id="@+id/iv1" android:layout_height="wrap_content"
+					android:layout_width="wrap_content"></ImageView>
+				<TextView android:id="@+id/tvGun1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+			<LinearLayout android:id="@+id/linearLayout1"
+				android:orientation="horizontal" android:layout_width="match_parent"
+				android:layout_height="match_parent" android:paddingBottom="20dp">
+				<CheckBox android:id="@+id/checkBox1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></CheckBox>
+				<ImageView android:id="@+id/iv2" android:layout_height="wrap_content"
+					android:layout_width="wrap_content"></ImageView>
+				<TextView android:id="@+id/tvGun2" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+
+			<LinearLayout android:id="@+id/linearLayout1"
+				android:orientation="horizontal" android:layout_width="match_parent"
+				android:layout_height="match_parent" android:paddingBottom="20dp">
+				<CheckBox android:id="@+id/checkBox1" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></CheckBox>
+				<ImageView android:id="@+id/iv3" android:layout_height="wrap_content"
+					android:layout_width="wrap_content"></ImageView>
+				<TextView android:id="@+id/tvGun3" android:layout_width="wrap_content"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+
+		</LinearLayout>
+	</ScrollView>
+
+
+
+
+</LinearLayout>
+
+
+	<!--
+		<LinearLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+	-->
+	<!--
+		android:orientation="vertical" android:layout_width="fill_parent"
+	-->
+	<!--	android:layout_height="fill_parent">-->
+<!---->
+	<!--		<TextView android:text="You've found the following:"-->
+	<!--			android:textAppearance="?android:attr/textAppearanceMedium"-->
+	<!--
+		android:id="@+id/textView3" android:layout_height = "wrap_content"
+	-->
+	<!--			android:layout_width="wrap_content"-->
+	<!--			></TextView>-->
+	<!--
+		<TextView android:text="Any food found is displayed here"
+		android:layout_height="wrap_content"
+		android:layout_width="match_parent"
+		android:id="@+id/tvLoot"></TextView>
+	-->
+	<!--		<TextView android:text="You have too many weapons, check-->
+	<!--		any weapons to be discarded"-->
+	<!--
+		android:id="@+id/textView2" android:layout_width="wrap_content"
+	-->
+	<!--			android:textAppearance="?android:attr/textAppearanceMedium"-->
+	<!--			android:layout_height="wrap_content"></TextView>-->
+	<!--		<ScrollView android:layout_height="wrap_content"-->
+	<!--
+		android:id="@+id/scrollView1" android:layout_width="match_parent">
+	-->
+	<!--			<LinearLayout android:id="@+id/linearLayout1"-->
+	<!--
+		android:orientation="vertical" android:layout_width="match_parent"
+	-->
+	<!--				android:layout_height="match_parent">-->
+	<!--				<LinearLayout android:id="@+id/linearLayout1"-->
+	<!--
+		android:orientation="horizontal" android:layout_width="match_parent"
+	-->
+	<!--					android:layout_height="match_parent">-->
+	<!--
+		<CheckBox android:text="setText()" android:id="@+id/checkBox1"
+	-->
+	<!--
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"></CheckBox>
+	-->
+	<!--
+		<ImageView android:id="@+id/imageView1" android:src="@drawable/pistol"
+	-->
+	<!--
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"></ImageView>
+	-->
+	<!--					-->
+	<!--				</LinearLayout>-->
+	<!--						<LinearLayout android:id="@+id/linearLayout1"-->
+	<!--
+		android:orientation="horizontal" android:layout_width="match_parent"
+	-->
+	<!--					android:layout_height="match_parent">-->
+	<!--
+		<CheckBox android:text="setText()" android:id="@+id/checkBox1"
+	-->
+	<!--
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"></CheckBox>
+	-->
+	<!--
+		<ImageView android:id="@+id/imageView1" android:src="@drawable/pistol"
+	-->
+	<!--
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"></ImageView>
+	-->
+	<!--					-->
+	<!--				</LinearLayout>-->
+	<!--						<LinearLayout android:id="@+id/linearLayout1"-->
+	<!--
+		android:orientation="horizontal" android:layout_width="match_parent"
+	-->
+	<!--					android:layout_height="match_parent">-->
+	<!--
+		<CheckBox android:text="setText()" android:id="@+id/checkBox1"
+	-->
+	<!--
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"></CheckBox>
+	-->
+	<!--
+		<ImageView android:id="@+id/imageView1" android:src="@drawable/pistol"
+	-->
+	<!--
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"></ImageView>
+	-->
+	<!--					-->
+	<!--				</LinearLayout>-->
+	<!--			</LinearLayout>-->
+	<!--		</ScrollView>-->
+<!---->
+	<!--	<Button android:text="Start" android:id="@+id/bStart"-->
+	<!--
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"></Button>
+	-->
+<!---->
+<!---->
+<!---->
+<!---->
+	<!--</LinearLayout>-->

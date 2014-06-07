@@ -1,0 +1,6 @@
+				//later, add better paramters
+//				if (botTimeShoot.getMS() <=  0){
+//					botTimeShoot.setMS(new Random().nextInt(1500)+500);
+//					if (gunshot != 0)
+//						sp.play(gunshot, 1f, 1f, 0, 0, 1.5f);
+//				}

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical" android:layout_width="fill_parent"
+	android:background="@drawable/sunset"
+	android:layout_height="fill_parent" android:weightSum="100">
+	<LinearLayout 
+		android:orientation="vertical" android:layout_width="match_parent"
+		android:weightSum="100" android:layout_height="190dp">
+		<!--	Weapon Rack (1st half of Northern Zone)-->
+		<LinearLayout
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="match_parent" android:weightSum="100"
+			android:layout_weight="60">
+			<!-- Weapon Slot with Ammo Count Below -->
+			<LinearLayout
+				android:orientation="vertical" android:layout_width="wrap_content"
+				android:layout_height="match_parent" android:layout_weight="25">
+				<ImageView android:layout_width="wrap_content" android:id="@+id/imageView1"
+					android:layout_height="wrap_content" android:src="@drawable/rackpistol"></ImageView>
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:id="@+id/tvPistolAmmo" android:text="23"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+			<LinearLayout 
+				android:orientation="vertical" android:layout_width="wrap_content"
+				android:layout_height="match_parent" android:layout_weight="25">
+				<ImageView android:layout_width="wrap_content" android:id="@+id/imageView1"
+					android:layout_height="wrap_content" android:src="@drawable/rackshotgun"></ImageView>
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:id="@+id/tvShotgunAmmo" android:text="13"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+			<LinearLayout
+				android:orientation="vertical" android:layout_width="wrap_content"
+				android:layout_height="match_parent" android:layout_weight="25">
+				<ImageView android:layout_width="wrap_content" android:id="@+id/imageView1"
+					android:layout_height="wrap_content" android:src="@drawable/racksmg"></ImageView>
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:id="@+id/tvSmgAmmo" android:text="92"
+					android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+			<LinearLayout 
+				android:orientation="vertical" android:layout_width="wrap_content"
+				android:layout_height="match_parent" android:layout_weight="25">
+				<ImageView android:layout_width="wrap_content" android:id="@+id/imageView1"
+					android:layout_height="wrap_content" android:src="@drawable/rackrifle"></ImageView>
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceLarge"
+					android:id="@+id/tvRifleAmmo" android:text="0" android:layout_height="wrap_content"></TextView>
+			</LinearLayout>
+	
+		</LinearLayout>
+		<!-- 2nd Half of Northern Zone -->
+		<LinearLayout 
+			android:orientation="horizontal" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:layout_weight="45">
+
+			<!-- Survivors Pane -->
+			<LinearLayout 
+				android:orientation="vertical" android:layout_width="fill_parent"
+				android:layout_height="fill_parent" android:layout_weight="50">
+				<!-- Text Survivors -->
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:id="@+id/textView1" android:text="Number of Survivors"
+					android:layout_height="wrap_content"></TextView>
+				<!-- Icon and Number -->
+				<LinearLayout
+					android:orientation="horizontal" android:layout_width="fill_parent"
+					android:layout_height="fill_parent">
+					<ImageView android:layout_width="wrap_content"
+						android:id="@+id/imageView1" android:layout_height="wrap_content"
+						android:src="@drawable/survivor"></ImageView>
+					<TextView android:layout_width="wrap_content"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:id="@+id/tvSurvivors" android:text="x5"
+						android:layout_height="wrap_content"></TextView>
+				</LinearLayout>
+			</LinearLayout>
+
+			<!-- Buildings Pane -->
+			<LinearLayout 
+				android:orientation="vertical" android:layout_width="fill_parent"
+				android:layout_height="fill_parent" android:layout_weight="50">
+				<!-- Text Buildings Unsearched -->
+				<TextView android:layout_width="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:id="@+id/textView1" android:text="Unexplored Buildings"
+					android:layout_height="wrap_content"></TextView>
+				<!-- Icon and Number -->
+				<LinearLayout 
+					android:orientation="horizontal" android:layout_width="fill_parent"
+					android:layout_height="fill_parent">
+					<ImageView android:layout_width="wrap_content"
+						android:id="@+id/imageView1" android:layout_height="wrap_content"
+						android:src="@drawable/building"></ImageView>
+					<TextView android:layout_width="wrap_content"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:id="@+id/tvBuildings" android:text="x13"
+						android:layout_height="wrap_content"></TextView>
+				</LinearLayout>
+			</LinearLayout>
+		</LinearLayout>
+
+	</LinearLayout>
+
+	<!--	Bottom half of screen -->
+
+
+	<LinearLayout
+		android:orientation="vertical" android:layout_width="match_parent"
+		android:layout_height="fill_parent" android:layout_weight="45">
+
+		<Button android:text="0" android:textSize="25dp" android:id="@+id/bSearchWeapons"
+			android:layout_width="268dp" android:drawableLeft="@drawable/searchforweapon"
+			android:layout_gravity="center" android:layout_height="wrap_content">
+		</Button>
+		<Button android:text="0" android:textSize="25dp" android:id="@+id/bSearchWall"
+			android:layout_width="268dp" android:drawableLeft="@drawable/searchforwallmat"
+			android:layout_gravity="center" android:layout_height="wrap_content">
+		</Button>
+		<Button android:drawableLeft="@drawable/searchforsurivors"
+			android:id="@+id/bSearchSurvivors" android:textSize="25dp"
+			android:layout_width="268dp" android:text="0" android:layout_gravity="center"
+			android:layout_height="wrap_content"></Button>
+		<Button android:id="@+id/bBeginScavenging" android:textSize="20dp"
+			android:layout_width="fill_parent" android:text="Begin Scavenging"
+			android:layout_gravity="center" android:layout_height="wrap_content"></Button>
+
+
+	</LinearLayout>
+
+</LinearLayout>

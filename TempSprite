@@ -1,0 +1,133 @@
+package graphics;
+
+import java.util.List;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.view.SurfaceView;
+
+/**
+ * The TempSprite class is used to produce Sprites that are not going to live
+ * for long. Such as bullets, explosions, zombie guts flying.
+ * 
+ * Recently, the TempSprite class has been augmented to also provide perpetual
+ * sprites that animate over and over. Its life must be -999 for it to not die
+ * and for its animation to perpetuate
+ * 
+ * Placing -999 in its life will make it immortal
+ */
+public class TempSprite {
+	private float x;
+	private float y;
+	private Bitmap bmp;
+	private int life;
+	private static final int BMP_COLUMNS = 5;
+	private static List<TempSprite> temps;
+	private long totalTime;
+	private int frameTime;
+	private int frameWidth;
+	private int currentFrame;
+
+	/**
+	 * if this doesn't work, it might be because of srcY
+	 */
+
+	public TempSprite(List<TempSprite> temps, SurfaceView gameView, float x,
+			float y, Bitmap bmp, int frameTime) {
+
+		totalTime = System.currentTimeMillis();
+
+		this.bmp = bmp;
+		frameWidth = bmp.getWidth() / BMP_COLUMNS;
+		TempSprite.temps = temps;
+		this.frameTime = frameTime;
+		life = 15;
+		this.x = x - (bmp.getWidth() / BMP_COLUMNS);
+		this.y = y - bmp.getHeight() / 2;
+
+	}
+
+	public TempSprite(List<TempSprite> temps, SurfaceView gameView, float x,
+			float y, Bitmap bmp, int frameTime, int life) {
+
+		totalTime = System.currentTimeMillis();
+		this.bmp = bmp;
+		frameWidth = bmp.getWidth() / BMP_COLUMNS;
+		TempSprite.temps = temps;
+		this.frameTime = frameTime;
+		this.life = life;
+		this.x = (x - (bmp.getWidth() / BMP_COLUMNS) / 2);
+		this.y = (y - bmp.getHeight() / 2);
+	}
+
+	public TempSprite(SurfaceView gameView, float x, float y, Bitmap bmp,
+			int frameTime, int life) {
+
+		totalTime = System.currentTimeMillis();
+		this.bmp = bmp;
+		frameWidth = bmp.getWidth() / BMP_COLUMNS;
+		this.frameTime = frameTime;
+		this.life = life;
+		this.x = (x - (bmp.getWidth() / BMP_COLUMNS) / 2);
+		this.y = (y - bmp.getHeight() / 2);
+	}
+
+	public void onDraw(Canvas canvas) {
+		draw(canvas);
+	}
+
+	public void onDraw(Canvas canvas, int x, int y) {
+		draw(canvas);
+		this.x = x;
+		this.y = y;
+	}
+
+	private void draw(Canvas canvas) {
+		update();
+
+		long currTime = (System.currentTimeMillis());
+
+		if (life != -999) {
+			if (currTime - totalTime >= frameTime) {
+
+				if (currentFrame < BMP_COLUMNS - 1) {
+					currentFrame++;
+				} else {
+					currentFrame = BMP_COLUMNS - 1;
+				}
+				totalTime = System.currentTimeMillis();
+			}
+		} else {
+			if (currTime - totalTime >= frameTime) {
+				currentFrame = ++currentFrame % BMP_COLUMNS;
+				totalTime = System.currentTimeMillis();
+			}
+		}
+
+		int srcX = currentFrame * frameWidth + 1;
+		int srcY = 0;
+		// this rectangle will show part of the bitmap
+		Rect src = new Rect(srcX, srcY, srcX + frameWidth, srcY
+				+ bmp.getHeight());
+		// this rectangle will paint the exact coordinates of the bitmap
+		Rect dst = new Rect((int) x, (int) y, (int) x + frameWidth, (int) y
+				+ bmp.getHeight());
+
+		canvas.drawBitmap(bmp, src, dst, null);
+	}
+
+	private void update() {
+		// -999 means the sprite is immortal. If the sprite has this value,
+		// the second part of the condition will be ignored and will not
+		// decrement
+		// thus, the sprite will not die.
+		if (life != -999 && --life < 1) {
+			temps.remove(this);
+		}
+	}
+
+}

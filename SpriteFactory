@@ -1,0 +1,440 @@
+package graphics;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import com.QuachProjectZombie.Briefing;
+import com.QuachProjectZombie.CommandCenter;
+import com.QuachProjectZombie.Main;
+import com.QuachProjectZombie.R;
+import com.QuachProjectZombie.SurvBot;
+import com.QuachProjectZombie.Main.GameView;
+
+import data.SpawnScript;
+
+import threadAndTimers.Timer;
+import zombieTypes.*;
+
+import Weapon.Weapon;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.view.MotionEvent;
+import android.view.SurfaceView;
+import android.view.View;
+
+public class SpriteFactory {
+
+	/**
+	 *SpriteFactory handles most of the sprite drawing and damage calculation.
+	 */
+
+	public static List<Sprite> spriteList = new ArrayList<Sprite>();
+	private List<TempSprite> temps = new ArrayList<TempSprite>();
+	private TempSprite uIChangeWeapon, uIChangeSpecial, crossHairs;
+	private SurfaceView gameView;
+	private int gameLevel, kills;
+	public int numberOfZombiesAlive;
+	private Bitmap grass, bloodshot, shot, explosion, crosshair, fence2, crit,
+			weapon1, weapon0, changeWeapon, changeSpecial, changeSpecialTouch,
+			changeWeaponTouch, street;
+	private boolean crossHairsCreated = false, runExplode = false,
+			bombKillsAll = false, allDead;
+	public boolean touchDetected = false;
+	private Activity activity;
+
+	private float explodeX, explodeY, xTouch, yTouch, xSuicide, ySuicide;
+	// this is only for seeing how much dmg is dealt. Will not be in final game
+	public Wall wall;
+
+	public int debugDamageDealt, counterZombieWalker, counterZombieRunner,
+			counterZombieTank, counterEliteRage, counterTotal;
+
+	public Timer spawnTimer;
+
+	private SoundPool sp;
+	private int soundGunshot = 0, soundCorpseExplode = 0, soundExplosion = 0,
+		soundGunDryFire = 0, soundGunCocking = 0;
+	private Timer botTimeShoot;
+	private boolean shotReadyBot = false;
+
+	SurvBot survBot1 = new SurvBot();
+	SurvBot survBot2 = new SurvBot();
+//	private boolean debugKillSprite = true;
+
+	public SpriteFactory(Activity activity, SurfaceView gameView, int gameLevel) {
+		this.activity = activity;
+		this.gameView = gameView;
+		this.gameLevel = gameLevel;
+		spawnTimer = new Timer(1);
+		
+		SpawnScript.draft();
+
+		shot = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.shot5);
+		grass = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.grass);
+
+
+		explosion = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.explosion7);
+		fence2 = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.fence5);
+		crit = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.crit);
+		changeWeapon = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.changeweapon);
+		changeSpecial = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.changespecial);
+		changeWeaponTouch = BitmapFactory.decodeResource(gameView
+				.getResources(), R.drawable.changeweapontouch);
+		changeSpecialTouch = BitmapFactory.decodeResource(gameView
+				.getResources(), R.drawable.changespecialtouch);
+		bloodshot = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.blood5);
+		weapon0 = BitmapFactory.decodeResource(gameView.getResources(), Weapon
+				.getImageRCode(0));
+		street = BitmapFactory.decodeResource(gameView.getResources(),
+				R.drawable.street);
+		// this is done so that there is no out of bounds exceptions on the
+		// arraylist
+		if (Weapon.getListSize() > 1) {
+			weapon1 = BitmapFactory.decodeResource(gameView.getResources(),
+					Weapon.getImageRCode(1));
+		}
+		uIChangeWeapon = new TempSprite(gameView, 0, 0, changeWeapon, 100, -999);
+		wall = new Wall(gameView);
+
+		sp = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
+		soundGunshot = sp.load(this.activity, R.raw.gunshot, 1);
+		soundExplosion = sp.load(this.activity, R.raw.explosion, 1);
+		soundCorpseExplode = sp.load(this.activity, R.raw.explodedeath, 1);
+		soundGunCocking = sp.load(this.activity, R.raw.guncocking, 1);
+		soundGunDryFire = sp.load(this.activity, R.raw.gundryfire, 1);
+		botTimeShoot = new Timer(2);
+	
+	}
+
+	public void playGunShot() {
+		if (soundGunshot != 0)
+			sp.play(soundGunshot, 1f, 1f, 0, 0, 1.5f);
+	}
+	public void playGunDryFire() {
+		if (soundGunDryFire != 0)
+			sp.play(soundGunDryFire, 1f, 1f, 0, 0, 1.5f);
+	}
+	public void playGunCocking() {
+		if (soundGunCocking != 0)
+			sp.play(soundGunCocking, 1f, 1f, 0, 0, 1.5f);
+	}
+	public void playExplosion() {
+		if (soundExplosion != 0)
+			sp.play(soundExplosion, 1f, 1f, 0, 0, 1.5f);
+	}
+	public void playCorpseExplosion() {
+		if (soundCorpseExplode != 0)
+			sp.play(soundCorpseExplode, 1f, 1f, 0, 0, 1.5f);
+	}
+
+
+
+	public void clearSprites() {
+		getSpriteList().clear();
+	}
+
+	public boolean spriteListEmpty() {
+		return getSpriteList().isEmpty();
+	}
+
+	public void touchDetected(float xTouch, float yTouch) {
+
+		this.xTouch = xTouch;
+		this.yTouch = yTouch;
+		touchDetected = true;
+		temps.add(new TempSprite(temps, gameView, xTouch, yTouch, shot, 50, 2));
+	}
+
+	public void render(Canvas canvas, long desiredFPSinMS, long startTime,
+			int hp) {
+
+		// SPAWN zombies while timer is going
+		if (Main.countdown.getSeconds() >= 0 && (spawnTimer.getSeconds() <= 0)) {
+			spawnTimer.reset();
+			SpawnScript.spawnZombies(this);
+		}
+		drawBackground(canvas);
+		drawTemp(canvas, desiredFPSinMS, startTime);
+		updateAndDraw(canvas, desiredFPSinMS, startTime);
+	}
+
+	private void updateAndDraw(Canvas canvas, long desiredFPSinMS,
+			long startTime) {
+		/*
+		 * Steps (in any other order, it may crash) 1. Draw sprite 2. Remove
+		 * sprite if its HP is 0 3. Draw wall
+		 */
+
+		// this makes it so that only one zombie is take down one at a time
+		boolean shotUsed = false;
+		counterTotal = counterZombieWalker + counterZombieRunner
+				+ counterZombieTank + counterEliteRage;
+		for (int i = getSpriteList().size() - 1; i >= 0; i--) {
+			Sprite sprite = getSpriteList().get(i);
+			if (counterTotal > 0 && !sprite.isAlive()) {
+				rezMachine(sprite);
+			}
+			sprite.checkWallHit();
+//			if (debugKillSprite){
+//				sprite.setHP(0);
+//			}
+			sprite.onDraw(canvas, desiredFPSinMS, startTime);
+
+			if (CommandCenter.countSurvivors() > 0) {
+				survBot1.update(sprite);
+				if (survBot1.checkIfFire(sprite)) {
+					temps.add(new TempSprite(temps, gameView, survBot1
+							.getBotX(), survBot1.getBotY(), shot, 50, 2));
+					temps.add(new TempSprite(temps, gameView, survBot1
+							.getBotX(), survBot1.getBotY(), bloodshot, 1, 3,
+							160));
+					playGunShot();
+				}
+				if (CommandCenter.countSurvivors() > 1){
+					survBot2.update(sprite);
+					if (survBot2.checkIfFire(sprite)) {
+						temps.add(new TempSprite(temps, gameView, survBot2
+								.getBotX(), survBot2.getBotY(), shot, 50, 2));
+						temps.add(new TempSprite(temps, gameView, survBot2
+								.getBotX(), survBot2.getBotY(), bloodshot, 1, 3,
+								160));
+						playGunShot();
+					}
+				}
+			}
+			
+			// if target is too far, the damage is halved
+			if (touchDetected && sprite.isCollision(xTouch, yTouch)
+					&& !shotUsed) {
+
+				Random random = new Random();
+				// if out of 100, number is within STATcritChance, do double
+				// damage!
+				int critMultiplier = 1;
+				int rangeMultiplier = 1;
+				// calculate crit multiplier
+				if (random.nextInt(100) + 1 <= Main.STATScritChance) {
+					critMultiplier = 2;
+					// paints CRIT on the zombie
+					temps.add(new TempSprite(temps, gameView, sprite.getX(),
+							sprite.getY(), crit, 1, 5));
+				}
+				// calculate range multiplier
+				if (sprite.getY() + sprite.getHeight() > Main.damageDropOff) {
+					rangeMultiplier = Briefing.currentEquippedGun
+							.getRangeMultiplier();
+				}
+				temps.add(new TempSprite(temps, gameView, sprite.getX()
+						+ sprite.getWidth() / 2, sprite.getY()
+						+ sprite.getHeight() / 2, bloodshot, 1, 3, 160));
+
+				// calculate final damage
+				debugDamageDealt = critMultiplier * rangeMultiplier
+						* Briefing.currentEquippedGun.getDamage();
+
+				sprite.runDamage(debugDamageDealt);
+				// Death animation of Zombies if it died
+
+				// resets. touchDetected will be true once the player touches
+				// screen
+				// again
+				touchDetected = false;
+				// this prevents multiple sprites from being killed by one shot
+				shotUsed = true;
+			}
+			if (!sprite.isAlive() && !sprite.isDead) {
+				sprite.runDeath(canvas, temps, kills);
+				playCorpseExplosion();
+				
+			}
+
+		}
+
+		// let's allow early stages of game to spawn one at a time. No looping
+		// to
+		// get the counters to zero
+		if (counterTotal > 0) {
+			if (counterZombieWalker > 0) {
+				spriteList.add(new ZombieWalker(gameView, gameLevel));
+				counterZombieWalker--;
+			}
+
+			if (counterZombieRunner > 0) {
+				spriteList.add(new ZombieRunner(gameView, gameLevel));
+				counterZombieRunner--;
+			}
+			if (counterZombieTank > 0) {
+				spriteList.add(new ZombieTank(gameView, gameLevel));
+				counterZombieTank--;
+			}
+			if (counterEliteRage > 0) {
+				spriteList.add(new EliteRageZombie(gameView, gameLevel));
+				counterEliteRage--;
+			}
+		}
+		// if after going through the sprite loop, there are still counters with
+		// value left....then we must create new zombies
+
+		// draw wall if hp is left
+		if (Main.STATSplayerHP > 0) {
+
+			wall.onDraw(canvas);
+			// this prevents out of bounds array exception
+
+			if (Weapon.getListSize() > 1) {
+				if (Briefing.currentEquippedGun == Weapon.getWeaponIndex(0)) {
+					canvas.drawBitmap(weapon0, canvas.getWidth() / 2
+							- weapon0.getWidth() / 2, canvas.getHeight()
+							- weapon0.getHeight() - 10, null);
+				} else {
+					canvas.drawBitmap(weapon1, canvas.getWidth() / 2
+							- weapon1.getWidth() / 2, canvas.getHeight()
+							- weapon1.getHeight() - 10, null);
+				}
+			}
+
+			// draw arrows here
+			if (Weapon.getListSize() > 1) {
+				uIChangeWeapon.draw(canvas, desiredFPSinMS, startTime);
+				if (!Main.fenceTouch) {
+					uIChangeWeapon.setXSpeed(0);
+					uIChangeWeapon.setX(1);
+					uIChangeWeapon.setY(canvas.getHeight()
+							- changeWeapon.getHeight());
+				} else {
+					uIChangeWeapon.setXSpeed(25);
+					if (uIChangeWeapon.getX() >= canvas.getWidth()
+							- uIChangeWeapon.getWidth()) {
+						uIChangeWeapon.setX((canvas.getWidth() / 10 * 1)
+								- changeWeapon.getWidth() / 2);
+					}
+				}
+			}
+
+		}
+	}
+
+	private void drawTemp(Canvas canvas, long desiredFPSinMS, long startTime) {
+		// TODO Auto-generated method stub
+		for (int i = temps.size() - 1; i >= 0; i--) {
+			temps.get(i).draw(canvas, desiredFPSinMS, startTime);
+		}
+	}
+
+	private void drawBackground(Canvas canvas) {
+		// TODO Auto-generated method stub
+		Rect rs = new Rect();
+		Rect rd = new Rect();
+		rs.left = rs.top = 0;
+		rs.right = street.getWidth();
+		rs.bottom = street.getHeight();
+	
+		rd.left = rd.top = 0;
+		rd.right = canvas.getWidth();
+		rd.bottom = canvas.getHeight();
+
+		canvas.drawBitmap(street, rs, rd, null);
+//		Paint paint = new Paint();
+//		ColorFilter filter = new LightingColorFilter(Color.GRAY, 0);
+//		paint.setColorFilter(filter);
+//		int tileColumns = canvas.getWidth() / grass.getWidth();
+//		int tileRows = canvas.getHeight() / grass.getHeight();
+//		for (int i = tileColumns; i >= 0; i--) {
+//			for (int z = tileRows; z >= 0; z--) {
+//				canvas.drawBitmap(grass, i * grass.getWidth(), z
+//						* grass.getHeight(), paint);
+//			}
+//		}
+	}
+
+	public int getkills() {
+		return kills;
+	}
+
+	public void setSpriteList(List<Sprite> spriteList) {
+		this.spriteList = spriteList;
+	}
+
+	public List<Sprite> getSpriteList() {
+		return spriteList;
+	}
+
+	public void bombKillsAll(float eventX, float eventY) {
+		// this flags all zombies to die in the render loop
+		bombKillsAll = true;
+		temps.add(new TempSprite(temps, gameView, eventX, eventY, explosion,
+				35, 30));
+	}
+
+	public void suicideBomb(float xSuicide, float ySuicide) {
+		this.xSuicide = xSuicide;
+		this.ySuicide = ySuicide;
+	}
+
+	// turn into inner class
+	public void rezMachine(Sprite sprite) {
+		// TODO Auto-generated method stub
+
+		if (counterZombieWalker > 0
+				&& sprite.getZombieID() == Sprite.ID_ZWALKER) {
+			sprite.revive();
+			counterZombieWalker--;
+		}
+		if (counterZombieRunner > 0
+				&& sprite.getZombieID() == Sprite.ID_ZRUNNER) {
+			sprite.revive();
+			counterZombieRunner--;
+		}
+		if (counterZombieTank > 0 && sprite.getZombieID() == Sprite.ID_ZTANK) {
+			sprite.revive();
+			counterZombieTank--;
+		}
+		if (counterEliteRage > 0 && sprite.getZombieID() == Sprite.ID_E_RAGE) {
+			sprite.revive();
+			counterEliteRage--;
+		}
+
+	}
+
+	public boolean touchWall(float eventX, float eventY) {
+		return wall.touchWall(eventX, eventY);
+	}
+
+	// this runs a sprite loop. Loops are expensive and should be used sparingly
+	public boolean checkListForLive() {
+
+		boolean listHasLive = false;
+		for (int i = getSpriteList().size() - 1; i >= 0; i--) {
+			Sprite sprite = getSpriteList().get(i);
+			if (sprite.isAlive()) {
+				listHasLive = true;
+				break;
+			}
+		}
+		return listHasLive;
+	}
+
+//	public void debugNoKillSprite() {
+//		// TODO Auto-generated method stub
+//		debugKillSprite = false;
+//		
+//	}
+}
